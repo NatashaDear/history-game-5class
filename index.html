@@ -521,12 +521,12 @@ document.getElementById("passwordInput").addEventListener("keydown", function(e)
 // ============================================
 let activePool = [];
 let currentIdx = 0;
-let schoolScore = 0;       // общий счёт за все разделы главы 3 (без олимпиады)
+let schoolScore = 0;
 let olyScore = 0;
 let playOlympiad = false;
 let currentMode = null;
-let baseLimit = 0;         // количество вопросов в текущем разделе
-let globalSchoolLimit = 0; // общее количество вопросов во всех разделах (для итогового отчёта)
+let baseLimit = 0;
+let globalSchoolLimit = 0;
 let olympiadQuestions = [];
 
 const gameContent = document.getElementById("gameContent");
@@ -536,7 +536,6 @@ const loginScreen = document.getElementById("loginScreen");
 let briefingParts = [];
 let currentPartIndex = 0;
 
-// Переменные для разделов Главы 3
 let totalParts = 3;
 let completedParts = [false, false, false];
 let currentPartNumber = 0;
@@ -611,14 +610,12 @@ function startSetup(mode) {
         }
     }
 
-    // ---- ГЛАВА 3: особая логика (переход + меню разделов) ----
     if (mode === 'chapter3') {
         completedParts = [false, false, false];
         schoolScore = 0;
         olyScore = 0;
         playOlympiad = false;
         globalSchoolLimit = 0;
-        // Разбиваем описание на части
         briefingParts = [];
         if (desc.includes('<!--SPLIT-->')) {
             const parts = desc.split('<!--SPLIT-->');
@@ -631,7 +628,6 @@ function startSetup(mode) {
         return;
     }
 
-    // ---- ДЛЯ ДРУГИХ ГЛАВ И МАРАФОНА ----
     const { direct, reverse, oge, olympiad } = collectQuestions(keys);
     const shuffledDirect = shuffleArray(direct);
     const shuffledReverse = shuffleArray(reverse);
@@ -640,7 +636,7 @@ function startSetup(mode) {
 
     activePool = [...shuffledDirect, ...shuffledReverse, ...shuffledOge];
     baseLimit = activePool.length;
-    globalSchoolLimit = baseLimit; // для других глав это общее количество
+    globalSchoolLimit = baseLimit;
     currentIdx = 0;
     schoolScore = 0;
     olyScore = 0;
@@ -649,7 +645,6 @@ function startSetup(mode) {
     showBriefing(title, desc, baseLimit);
 }
 
-// ---- ГЛАВА 3: пошаговое введение ----
 function showChapter3Intro(title, content) {
     gameContent.innerHTML = `
         <h1>🚀 ПОДГОТОВКА К ЗАПУСКУ 🚀</h1>
@@ -660,7 +655,6 @@ function showChapter3Intro(title, content) {
     `;
 }
 
-// ---- Меню выбора раздела (Глава 3) ----
 function showPartMenu() {
     const partTitles = [
         "Раздел 1. География и объединение Египта",
@@ -695,7 +689,6 @@ function showPartMenu() {
     gameContent.innerHTML = html;
 }
 
-// ---- Запуск раздела ----
 function startPart(partNumber) {
     if (completedParts[partNumber-1]) {
         if (!confirm(`Раздел ${partNumber} уже пройден. Пройти его заново?`)) {
@@ -711,7 +704,6 @@ function startPart(partNumber) {
         return;
     }
 
-    // Собираем вопросы из раздела
     const direct = shuffleArray(partData.questions.schoolDirect || []);
     const reverse = shuffleArray(partData.questions.schoolReverse || []);
     const oge = shuffleArray(partData.questions.schoolOge || []);
@@ -721,7 +713,6 @@ function startPart(partNumber) {
     playOlympiad = false;
     olympiadQuestions = [];
 
-    // Подсчёт общего количества вопросов для Главы 3 (для итогового отчёта)
     let total = 0;
     for (let i = 1; i <= totalParts; i++) {
         const pk = 'part' + i;
@@ -737,7 +728,6 @@ function startPart(partNumber) {
     showBriefing(partData.title, `В этом разделе тебе предстоит ответить на ${baseLimit} вопросов. Удачи!`, baseLimit);
 }
 
-// ---- Показ брифинга перед вопросами ----
 function showBriefing(title, desc, count) {
     gameContent.innerHTML = `
         <h1>🚀 ПОДГОТОВКА К ЗАПУСКУ 🚀</h1>
@@ -748,7 +738,6 @@ function showBriefing(title, desc, count) {
     `;
 }
 
-// ---- Вопросы (общая логика) ----
 let currentShuffledCorrectIndex = -1;
 
 function showQuestion() {
@@ -830,33 +819,36 @@ function checkAnswer(chosenIdx) {
     }
 
     currentIdx++;
+
+    // Если достигнут конец раздела – завершаем его автоматически
+    if (!playOlympiad && currentIdx >= baseLimit) {
+        finishPart();
+        return;
+    }
+    if (playOlympiad && currentIdx >= activePool.length) {
+        showFinal();
+        return;
+    }
+
+    // Иначе создаём кнопку "ДАЛЕЕ"
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn";
-    if (!playOlympiad) {
-        if (currentIdx < baseLimit) {
-            const part = Math.floor(baseLimit / 3);
-            const remainder = baseLimit % 3;
-            let nextRound = 1;
-            if (currentIdx < part) nextRound = 1;
-            else if (currentIdx < 2 * part + (remainder >= 1 ? 1 : 0)) nextRound = 2;
-            else nextRound = 3;
-            const nextRoundNames = ['ПРЯМОЙ ТЕСТ', 'ЛОГИЧЕСКИЙ РЕВЕРС', 'ФОРМАТ ОГЭ'];
-            nextBtn.innerText = `ДАЛЕЕ (Раунд ${nextRound})`;
-        } else {
-            nextBtn.innerText = "ЗАВЕРШИТЬ РАЗДЕЛ";
-        }
+    if (!play奥林匹iad) {
+        const part = Math.floor(baseLimit / 3);
+        const remainder = baseLimit % 3;
+        let nextRound = 1;
+        if (currentIdx < part) nextRound = 1;
+        else if (currentIdx < 2 * part + (remainder >= 1 ? 1 : 0)) nextRound = 2;
+        else nextRound = 3;
+        const nextRoundNames = ['ПРЯМОЙ ТЕСТ', 'ЛОГИЧЕСКИЙ РЕВЕРС', 'ФОРМАТ ОГЭ'];
+        nextBtn.innerText = `ДАЛЕЕ (Раунд ${nextRound})`;
     } else {
-        if (currentIdx < activePool.length) {
-            nextBtn.innerText = "ДАЛЕЕ (Олимпиада)";
-        } else {
-            nextBtn.innerText = "ЗАВЕРШИТЬ ИГРУ";
-        }
+        nextBtn.innerText = "ДАЛЕЕ (Олимпиада)";
     }
     nextBtn.onclick = showQuestion;
     gameContent.appendChild(nextBtn);
 }
 
-// ---- Завершение раздела ----
 function finishPart() {
     completedParts[currentPartNumber-1] = true;
     const allDone = completedParts.every(v => v === true);
@@ -891,7 +883,6 @@ function finishPart() {
     gameContent.innerHTML = html;
 }
 
-// ---- Запуск олимпиады (для Главы 3) ----
 function startOlympiad() {
     const oly = historyDatabase.chapter3.olympiad || [];
     if (oly.length === 0) {
@@ -904,10 +895,8 @@ function startOlympiad() {
     showQuestion();
 }
 
-// ---- Финал (после олимпиады или если олимпиады нет) ----
 function showFinal() {
     const olyLimit = olympiadQuestions.length;
-    // Для Главы 3 и для других глав используем globalSchoolLimit
     const limit = globalSchoolLimit || baseLimit;
     const schoolMark = getSchoolMark(schoolScore, limit);
     let html = `<h1>🏁 СУПЕР-МАРАФОН ЗАВЕРШЕН! 🏁</h1><h2>Экзаменационная ведомость:</h2><div class="info-box" style="border-color: #3b82f6;">`;
