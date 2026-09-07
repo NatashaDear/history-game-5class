@@ -225,7 +225,7 @@ const STORAGE_KEY = "timeMachineLogin";
 // 📚 БАЗА ДАННЫХ
 // ============================================
 const historyDatabase = {
-    // ---- ГЛАВА 1 (полная, без изменений) ----
+    // ---- ГЛАВА 1 ----
     chapter1: {
         title: "Глава 1. Древнейшие люди",
         paragraphs: "§ 1–3",
@@ -269,7 +269,7 @@ const historyDatabase = {
             { p: 3, q: "<b>Анализ мифологического мышления.</b><br>В поздние эпохи придумали миф о Прометее, который украл огонь у богов. Какую реальную историческую память человечества отражает этот миф?", a: ["Точная копия космоса", "То, что первые люди долго не умели добывать огонь сами", "Люди летали на Олимп"], c: 1, f: "Абсолютно! Миф отражает долгое неумение добывать огонь." }
         ]
     },
-    // ---- ГЛАВА 2 (полная, без изменений) ----
+    // ---- ГЛАВА 2 ----
     chapter2: {
         title: "Глава 2. Возникновение земледелия и скотоводства",
         paragraphs: "§ 4",
@@ -311,7 +311,7 @@ const historyDatabase = {
             { p: 4, q: "<b>Технологическая цепочка.</b><br>Правильная последовательность: 1. Излишки, 2. Производство, 3. Неравенство, 4. Государство.", a: ["1-2-3-4", "2-1-4-3", "4-3-2-1"], c: 1, f: "Абсолютно! Производство → излишки → неравенство → государство." }
         ]
     },
-    // ---- ГЛАВА 3 (с разбивкой на подглавы) ----
+    // ---- ГЛАВА 3 ----
     chapter3: {
         title: "Глава 3. Древний Египет",
         paragraphs: "§ 5–10",
@@ -532,7 +532,6 @@ let olympiadQuestions = [];
 const gameContent = document.getElementById("gameContent");
 const loginScreen = document.getElementById("loginScreen");
 
-// Переменные для пошагового брифинга Главы 3
 let briefingParts = [];
 let currentPartIndex = 0;
 
@@ -820,7 +819,7 @@ function checkAnswer(chosenIdx) {
 
     currentIdx++;
 
-    // Если достигнут конец раздела – завершаем его автоматически
+    // Если достигнут конец раздела – автоматически завершаем
     if (!playOlympiad && currentIdx >= baseLimit) {
         finishPart();
         return;
@@ -833,7 +832,7 @@ function checkAnswer(chosenIdx) {
     // Иначе создаём кнопку "ДАЛЕЕ"
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn";
-    if (!play奥林匹iad) {
+    if (!playOlympiad) {
         const part = Math.floor(baseLimit / 3);
         const remainder = baseLimit % 3;
         let nextRound = 1;
