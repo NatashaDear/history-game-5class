@@ -819,7 +819,7 @@ function checkAnswer(chosenIdx) {
 
     currentIdx++;
 
-    // Если достигнут конец раздела – автоматически завершаем
+    // ---- Проверка, закончился ли раздел ----
     if (!playOlympiad && currentIdx >= baseLimit) {
         finishPart();
         return;
@@ -829,7 +829,7 @@ function checkAnswer(chosenIdx) {
         return;
     }
 
-    // Иначе создаём кнопку "ДАЛЕЕ"
+    // ---- ЕСЛИ НЕ ЗАКОНЧИЛСЯ – создаём кнопку "ДАЛЕЕ" ----
     const nextBtn = document.createElement("button");
     nextBtn.className = "btn";
     if (!playOlympiad) {
