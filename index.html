@@ -134,7 +134,7 @@
         }
         .logout-btn:hover { background: #374151; color: #ef4444; }
 
-        /* Яркий и заметный номер параграфа */
+        /* Яркий и заметный номер параграфа – единственный стиль .p-tag */
         .p-tag {
             display: inline-block;
             background: #1e3a8a;
@@ -244,7 +244,7 @@ const historyDatabase = {
             { p: 4, q: "Древние земледельцы почитали богиню, дающую урожай. <br><br><span style='color:#f59e0b'>Как её называли?</span>", a: ["Богиня-мать (Земли)", "Богиня солнца", "Богиня войны"], c: 0, f: "Точно! Культ богини-матери был главным у земледельцев." }
         ],
         schoolOge: [
-            { p: 4, q: "<b>Задание ОГЭ на работу с терминами.</b><br>Ниже приведён список понятий. Все они за исключением одного возникли в ходе перехода к земледию и скотоводству. Найдите лишний термин:", a: ["глиняный кувшин", "мотыга", "бродячее человеческое стадо", "ткацкий станок"], c: 2, f: "Правильно! Бродячее стадо – это у охотников." },
+            { p: 4, q: "<b>Задание ОГЭ на работу с терминами.</b><br>Ниже приведён список понятий. Все они за исключением одного возникли в ходе перехода к земледелию и скотоводству. Найдите лишний термин:", a: ["глиняный кувшин", "мотыга", "бродячее человеческое стадо", "ткацкий станок"], c: 2, f: "Правильно! Бродячее стадо – это у охотников." },
             { p: 4, q: "<b>Задание ОГЭ на причинно-следственные связи.</b><br>Переход к производящему хозяйству называют 'неолитической революцией'. Что стало её главным следствием?", a: ["Люди перестали использовать огонь", "Появились поселения, ремёсла, неравенство", "Все переселились в Африку"], c: 1, f: "Верно! Производство еды изменило общество." },
             { p: 4, q: "<b>Задание ОГЭ на анализ источника.</b><br>Археологи нашли захоронение: в одной могиле золото, в других – черепки. Какой вывод?", a: ["Все были равны", "Появилось имущественное неравенство", "Люди не любили золото"], c: 1, f: "Блестяще! Это признак социального расслоения." },
             { p: 4, q: "<b>Задание ОГЭ на группировку понятий.</b><br>Какое понятие объединяет 'мотыга', 'серп', 'зернотерка'?", a: ["Орудия земледельцев", "Оружие", "Предметы роскоши"], c: 0, f: "Точно! Это орудия труда земледельцев." },
@@ -258,7 +258,7 @@ const historyDatabase = {
             { p: 4, q: "<b>Технологическая цепочка.</b><br>Правильная последовательность: 1. Излишки, 2. Производство, 3. Неравенство, 4. Государство.", a: ["1-2-3-4", "2-1-4-3", "4-3-2-1"], c: 1, f: "Абсолютно! Производство → излишки → неравенство → государство." }
         ]
     }
-    // 👇 НОВЫЕ ГЛАВЫ ДОБАВЛЯЙТЕ СЮДА
+    // 👇 НОВЫЕ ГЛАВЫ ДОБАВЛЯЙТЕ СЮДА (например, chapter3: { ... })
 };
 
 // ============================================
@@ -438,7 +438,7 @@ function startSetup(mode) {
     currentIdx = 0;
     schoolScore = 0;
     olyScore = 0;
-    playOlympiad = false;   // сброс перед началом
+    playOlympiad = false;
 
     showBriefing(title, desc, baseLimit);
 }
@@ -467,13 +467,13 @@ function showQuestion() {
     const qObj = activePool[currentIdx];
     const progressPct = ((currentIdx) / activePool.length) * 100;
 
-    // ---- Номер параграфа (очень заметно) ----
+    // Номер параграфа
     let pTag = '';
     if (qObj.p) {
         pTag = `<div class="p-tag">📖 §${qObj.p}</div>`;
     }
 
-    // ---- Тег раунда ----
+    // Тег раунда
     let tagHtml = '';
     if (!playOlympiad) {
         const part = Math.floor(baseLimit / 3);
@@ -493,7 +493,7 @@ function showQuestion() {
         tagHtml = `<span class="round-tag" style="background-color:#7c2d12; color:#fed7aa;">🏆 Раунд 4: Олимпиада (${olyCur}/${olyTot})</span>`;
     }
 
-    // ---- Перемешиваем варианты ----
+    // Перемешиваем варианты
     const originalAnswers = qObj.a;
     const shuffled = shuffleArray(originalAnswers);
     const correctAnswerText = originalAnswers[qObj.c];
@@ -502,7 +502,7 @@ function showQuestion() {
 
     let html = `<div class="progress-bar"><div class="progress" style="width: ${progressPct}%"></div></div>`;
     html += tagHtml;
-    html += pTag;   // теперь параграф виден всегда
+    html += pTag;
     html += `<h3 style="margin-top:10px; line-height:1.4;">${qObj.q}</h3>`;
     html += `<div class="options">`;
     shuffled.forEach((opt, idx) => {
@@ -577,7 +577,7 @@ function startOlympiad() {
         showFinal();
         return;
     }
-    playOlympiad = true;          // запоминаем, что олимпиада запущена
+    playOlympiad = true;
     activePool = activePool.concat(olympiadQuestions);
     showQuestion();
 }
@@ -595,7 +595,6 @@ function showFinal() {
     const schoolMark = getSchoolMark(schoolScore, baseLimit);
     let html = `<h1>🏁 СУПЕР-МАРАФОН ЗАВЕРШЕН! 🏁</h1><h2>Экзаменационная ведомость:</h2><div class="info-box" style="border-color: #3b82f6;">`;
     html += `<div class="result-item">🏫 <b>Школьная программа + ОГЭ:</b> <span>${schoolScore} из ${baseLimit} баллов</span> — <b style="color:#10b981">${schoolMark}</b></div>`;
-    // ------ ИСПРАВЛЕННАЯ ЛОГИКА ОЛИМПИАДЫ ------
     if (playOlympiad && olyLimit > 0) {
         const olyMark = olyScore === olyLimit ? "Победитель олимпиады" : (olyScore >= (olyLimit * 0.6) ? "Призёр олимпиады" : "Участник");
         html += `<div class="result-item" style="border-left:4px solid #f59e0b;">🏆 <b>Олимпиадный уровень:</b> <span>${olyScore} из ${olyLimit} баллов</span> — <b style="color:#f59e0b">${olyMark}</b></div>`;
