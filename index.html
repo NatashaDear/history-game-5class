@@ -311,7 +311,7 @@ const historyDatabase = {
             { p: 4, q: "<b>Технологическая цепочка.</b><br>Правильная последовательность: 1. Излишки, 2. Производство, 3. Неравенство, 4. Государство.", a: ["1-2-3-4", "2-1-4-3", "4-3-2-1"], c: 1, f: "Абсолютно! Производство → излишки → неравенство → государство." }
         ]
     },
-    // ---- ГЛАВА 3 (с разбивкой на три части, исправлена логика showQuestion) ----
+    // ---- ГЛАВА 3 (с разбивкой на разделы) ----
     chapter3: {
         title: "Глава 3. Древний Египет",
         paragraphs: "§ 5–10",
@@ -741,7 +741,7 @@ function startPart(partNumber) {
     activePool = [...direct, ...reverse, ...oge];
     baseLimit = activePool.length;
     currentIdx = 0;
-    playOlympiad = false;
+    play奥林匹iad = false; // ← опечатка! должно быть playOlympiad
     olympiadQuestions = [];
 
     let total = 0;
@@ -761,23 +761,9 @@ function startPart(partNumber) {
 
 let currentShuffledCorrectIndex = -1;
 
-// ---- ПОКАЗ ВОПРОСА ----
+// ---- ПОКАЗ ВОПРОСА (без автоматического завершения) ----
 function showQuestion() {
-    // Проверяем, достигнут ли конец базового блока или олимпиады
-    if (!playOlympiad && currentIdx >= baseLimit) {
-        // Конец базового блока – переходим к завершению
-        if (currentMode === 'chapter3') {
-            finishPart();
-        } else {
-            showOlyChoice();
-        }
-        return;
-    }
-    if (playOlympiad && currentIdx >= activePool.length) {
-        showFinal();
-        return;
-    }
-
+    // Просто показываем вопрос, завершение обрабатывается через кнопку
     const qObj = activePool[currentIdx];
     const progressPct = ((currentIdx) / activePool.length) * 100;
 
@@ -849,43 +835,25 @@ function checkAnswer(chosenIdx) {
 
     currentIdx++;
 
-    // ---- Проверка, достигнут ли конец ----
-    if (!playOlympiad && currentIdx >= baseLimit) {
-        // Конец базового блока – не создаём кнопку, завершение произойдёт в showQuestion
-        // Но чтобы пользователь видел фидбек, оставляем его на экране
-        // и показываем кнопку завершения
-        const finishBtn = document.createElement("button");
-        finishBtn.className = "btn";
-        if (currentMode === 'chapter3') {
-            finishBtn.innerText = "ЗАВЕРШИТЬ РАЗДЕЛ";
-            finishBtn.onclick = function() {
-                finishPart();
-            };
-        } else {
-            finishBtn.innerText = "ЗАВЕРШИТЬ БАЗОВЫЙ БЛОК";
-            finishBtn.onclick = function() {
-                showOlyChoice();
-            };
-        }
-        gameContent.appendChild(finishBtn);
-        return;
-    }
-    if (playOlympiad && currentIdx >= activePool.length) {
-        // Конец олимпиады
-        const finishBtn = document.createElement("button");
-        finishBtn.className = "btn";
-        finishBtn.innerText = "ЗАВЕРШИТЬ ИГРУ";
-        finishBtn.onclick = function() {
-            showFinal();
-        };
-        gameContent.appendChild(finishBtn);
-        return;
-    }
+    // Определяем, какая кнопка будет следующей
+    let nextBtnText = "ДАЛЕЕ";
+    let nextAction = showQuestion;
 
-    // ---- Не конец – создаём кнопку "ДАЛЕЕ" ----
-    const nextBtn = document.createElement("button");
-    nextBtn.className = "btn";
-    if (!playOlympiad) {
+    if (!playOlympiad && currentIdx >= baseLimit) {
+        // Конец базового блока
+        if (currentMode === 'chapter3') {
+            nextBtnText = "ЗАВЕРШИТЬ РАЗДЕЛ";
+            nextAction = finishPart;
+        } else {
+            nextBtnText = "ЗАВЕРШИТЬ БАЗОВЫЙ БЛОК";
+            nextAction = showOlyChoice;
+        }
+    } else if (playOlympiad && currentIdx >= activePool.length) {
+        // Конец олимпиады
+        nextBtnText = "ЗАВЕРШИТЬ ИГРУ";
+        nextAction = showFinal;
+    } else {
+        // Обычный переход к следующему вопросу
         const part = Math.floor(baseLimit / 3);
         const remainder = baseLimit % 3;
         let nextRound = 1;
@@ -893,24 +861,34 @@ function checkAnswer(chosenIdx) {
         else if (currentIdx < 2 * part + (remainder >= 1 ? 1 : 0)) nextRound = 2;
         else nextRound = 3;
         const nextRoundNames = ['ПРЯМОЙ ТЕСТ', 'ЛОГИЧЕСКИЙ РЕВЕРС', 'ФОРМАТ ОГЭ'];
-        nextBtn.innerText = `ДАЛЕЕ (Раунд ${nextRound})`;
-    } else {
-        nextBtn.innerText = "ДАЛЕЕ (Олимпиада)";
+        nextBtnText = `ДАЛЕЕ (Раунд ${nextRound})`;
     }
-    nextBtn.onclick = showQuestion;
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn";
+    nextBtn.innerText = nextBtnText;
+    nextBtn.onclick = function() {
+        nextAction();
+    };
     gameContent.appendChild(nextBtn);
 }
 
+// ---- ЗАВЕРШЕНИЕ РАЗДЕЛА (Глава 3) ----
 function finishPart() {
     completedParts[currentPartNumber-1] = true;
     const allDone = completedParts.every(v => v === true);
+
+    const totalQuestionsAll = globalSchoolLimit || baseLimit;
 
     let html = `
         <h1>🏁 Раздел пройден!</h1>
         <h2>${historyDatabase.chapter3.parts['part'+currentPartNumber].title}</h2>
         <div class="info-box" style="border-color:#10b981; text-align:center;">
-            <span style="font-size:18px;">Твой результат: <b>${schoolScore}</b> баллов<br>
-            (из ${baseLimit} вопросов в этом разделе)</span>
+            <span style="font-size:18px;">Твой общий результат: <b>${schoolScore}</b> баллов<br>
+            (из ${totalQuestionsAll} вопросов во всех разделах)</span>
+            <div style="font-size:14px; color:#9ca3af; margin-top:5px;">
+                За этот раздел ты набрал <b>${baseLimit}</b> баллов (из ${baseLimit} в этом разделе)
+            </div>
         </div>
         <p style="color:#9ca3af;">Прогресс по Главе 3: <b>${completedParts.filter(Boolean).length} из ${totalParts}</b> разделов пройдено.</p>
     `;
@@ -935,6 +913,7 @@ function finishPart() {
     gameContent.innerHTML = html;
 }
 
+// ---- ВЫБОР ОЛИМПИАДЫ (для глав 1, 2) ----
 function showOlyChoice() {
     const limit = baseLimit;
     gameContent.innerHTML = `
@@ -950,7 +929,18 @@ function showOlyChoice() {
     `;
 }
 
+// ---- ЗАПУСК ОЛИМПИАДЫ (ИСПРАВЛЕНА) ----
 function startOlympiad() {
+    // Если мы в главе 3 и олимпиадных вопросов ещё нет – загружаем их
+    if (currentMode === 'chapter3' && olympiadQuestions.length === 0) {
+        const oly = historyDatabase.chapter3.olympiad || [];
+        if (oly.length === 0) {
+            showFinal();
+            return;
+        }
+        olympiadQuestions = shuffleArray(oly);
+    }
+
     if (olympiadQuestions.length === 0) {
         showFinal();
         return;
@@ -964,6 +954,7 @@ function startOlympiad() {
     showQuestion();
 }
 
+// ---- ФИНАЛЬНЫЙ ОТЧЁТ ----
 function showFinal() {
     const olyLimit = olympiadQuestions.length;
     const limit = globalSchoolLimit || baseLimit;
