@@ -18,7 +18,11 @@
         .btn-success { background: linear-gradient(to right, #059669, #047857); }
         .btn-success:hover { box-shadow: 0 6px 15px rgba(5,150,105,0.5); }
         .options { display: flex; flex-direction: column; gap: 12px; margin: 25px 0; }
-        .option-btn { background-color: #374151; color: white; border: 1px solid #4b5563; padding: 14px; text-align: left; font-size: 15px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        .chapter-card { display: flex; flex-direction: column; gap: 0; }
+        .chapter-card .option-btn { border-radius: 8px 8px 0 0; }
+        .term-btn { background: linear-gradient(to right, #6d28d9, #4c1d95); color: white; border: 1px solid #7c3aed; border-top: none; padding: 8px 14px; font-size: 13px; border-radius: 0 0 8px 8px; cursor: pointer; transition: 0.2s; text-align: center; }
+        .term-btn:hover { background: linear-gradient(to right, #7c3aed, #5b21b6); border-color: #8b5cf6; }
+        .option-btn { background-color: #374151; color: white; border: 1px solid #4b5563; padding: 14px; text-align: left; font-size: 15px; border-radius: 8px; cursor: pointer; transition: background 0.2s; width: 100%; }
         .option-btn:hover { background-color: #4b5563; border-color: #3b82f6; }
         .option-btn:disabled { cursor: default; }
         .feedback { font-size: 18px; font-weight: bold; margin-top: 15px; min-height: 27px; }
@@ -28,6 +32,7 @@
         .round1-tag { background-color: #065f46; color: #34d399; }
         .round2-tag { background-color: #701a75; color: #f472b6; }
         .round3-tag { background-color: #1e3a8a; color: #93c5fd; }
+        .round4-tag { background-color: #5b21b6; color: #c4b5fd; }
         .result-item { text-align: left; margin: 10px 0; padding: 8px; background: #1f2937; border-radius: 6px; }
         .footer-copyright { margin-top: 30px; padding-top: 15px; border-top: 1px solid #374151; font-size: 12px; color: #6b7280; line-height: 1.5; text-align: center; }
         .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 20px; }
@@ -114,6 +119,18 @@ function getChapterTitle(key) { return historyDatabase[key]?.title || key; }
 function getChapterParagraphs(key) { return historyDatabase[key]?.paragraphs || ''; }
 function getChapterDesc(key) { return historyDatabase[key]?.desc || ''; }
 function getChapterFullDesc(key) { return historyDatabase[key]?.fullDescription || getChapterDesc(key); }
+
+// Собрать все терминологические вопросы из главы (включая разделы)
+function getTerminologyCount(ch) {
+    let count = 0;
+    if (ch.terminology) count += ch.terminology.length;
+    if (ch.parts) {
+        Object.values(ch.parts).forEach(p => {
+            if (p.questions && p.questions.terminology) count += p.questions.terminology.length;
+        });
+    }
+    return count;
+}
 
 function collectQuestions(keys) {
     let direct = [], reverse = [], oge = [], vpr = [], olympiad = [], terminology = [];
@@ -226,17 +243,28 @@ function showMainMenu() {
     const keys = getChapterKeys();
     let optionsHtml = '';
     keys.forEach(key => {
+        const ch = historyDatabase[key];
         const title = getChapterTitle(key);
         const paragraphs = getChapterParagraphs(key);
         const desc = getChapterDesc(key);
         const shortDesc = desc.length > 80 ? desc.substring(0, 80) + '...' : desc;
+        const termsCount = getTerminologyCount(ch);
+
+        let termsBtn = '';
+        if (termsCount > 0) {
+            termsBtn = `<button class="term-btn" onclick="startTerminologyQuiz('${key}')">📚 Тренировка терминов (${termsCount})</button>`;
+        }
+
         optionsHtml += `
-            <button class="option-btn" style="border-left: 5px solid #3b82f6;" onclick="startSetup('${key}')">
-                <b>📁 ${title}</b>
-                <div class="paragraphs-tag">${paragraphs}</div>
-                <br>
-                <span style="font-size:13px; color:#9ca3af;">${shortDesc}</span>
-            </button>
+            <div class="chapter-card">
+                <button class="option-btn" style="border-left: 5px solid #3b82f6;" onclick="startSetup('${key}')">
+                    <b>📁 ${title}</b>
+                    <div class="paragraphs-tag">${paragraphs}</div>
+                    <br>
+                    <span style="font-size:13px; color:#9ca3af;">${shortDesc}</span>
+                </button>
+                ${termsBtn}
+            </div>
         `;
     });
     optionsHtml += `
@@ -258,6 +286,54 @@ function showMainMenu() {
         </div>
         ${renderCopyright()}
     `;
+}
+
+// ============================================
+// ОТДЕЛЬНЫЙ РЕЖИМ: ТРЕНИРОВКА ТЕРМИНОВ
+// ============================================
+function startTerminologyQuiz(chapterKey) {
+    const ch = historyDatabase[chapterKey];
+    if (!ch) { showMainMenu(); return; }
+
+    let terms = [];
+    if (ch.terminology) terms.push(...ch.terminology);
+    if (ch.parts) {
+        Object.values(ch.parts).forEach(part => {
+            if (part.questions && part.questions.terminology) {
+                terms.push(...part.questions.terminology);
+            }
+        });
+    }
+
+    if (terms.length === 0) {
+        alert('В этой главе нет терминологического диктанта.');
+        return;
+    }
+
+    currentMode = 'terminology_' + chapterKey;
+    currentPartsChapter = null;
+    currentPartKey = null;
+    scoreBeforePart = 0;
+
+    const shuffled = shuffleArray(terms);
+    activePool = shuffled;
+    baseLimit = activePool.length;
+    globalSchoolLimit = baseLimit;
+    currentIdx = 0;
+    schoolScore = 0;
+    olyScore = 0;
+    playOlympiad = false;
+    olympiadQuestions = [];
+
+    roundLayout = [
+        { name: 'Тренировка терминов', icon: '📚', cls: 'round4-tag', count: baseLimit, start: 0 }
+    ];
+
+    showBriefing(
+        `📚 Термины: ${ch.title}`,
+        `Тренировка терминов по главе «${ch.title}». Только терминологические вопросы, без примеси обычных тестов.`,
+        baseLimit
+    );
 }
 
 function startSetup(mode) {
@@ -305,7 +381,6 @@ function startSetup(mode) {
     const shuffledTerminology = shuffleArray(terminology);
     olympiadQuestions = shuffleArray(olympiad);
 
-    // Для глобального марафона — все вопросы в одном пуле (включая олимпиадные)
     if (mode === 'all') {
         activePool = [...shuffledDirect, ...shuffledReverse, ...shuffledOge, ...shuffledVpr, ...shuffledTerminology, ...olympiadQuestions];
     } else {
@@ -550,9 +625,12 @@ function checkAnswer(chosenIdx) {
         if (currentPartsChapter) {
             nextBtnText = "ЗАВЕРШИТЬ РАЗДЕЛ";
             nextAction = finishPart;
-        } else {
+        } else if (olympiadQuestions.length > 0) {
             nextBtnText = "ЗАВЕРШИТЬ БАЗОВЫЙ БЛОК";
             nextAction = showOlyChoice;
+        } else {
+            nextBtnText = "ЗАВЕРШИТЬ";
+            nextAction = showFinal;
         }
     } else if (playOlympiad && currentIdx >= activePool.length) {
         nextBtnText = "ЗАВЕРШИТЬ ИГРУ";
