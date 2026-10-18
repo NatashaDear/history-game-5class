@@ -57,6 +57,7 @@
         .img-grid { display: flex; gap: 15px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
         .img-grid > div { text-align: center; flex: 1; min-width: 200px; }
         .img-grid .img-label { font-weight: bold; color: #93c5fd; margin-bottom: 5px; }
+        .img-error { color: #ef4444; font-size: 12px; margin-top: 5px; }
         @media (max-width: 500px) { .container { padding: 15px; } h1 { font-size: 20px; } }
     </style>
 </head>
@@ -130,6 +131,17 @@ function getTerminologyCount(ch) {
         });
     }
     return count;
+}
+
+// Рендер картинки с заглушкой при ошибке
+function renderImage(src, alt) {
+    const safeSrc = src.replace(/'/g, "\\'");
+    return `
+        <img src="${src}" alt="${alt}" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" 
+             style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid #4b5563;">
+        <div style="display:none;" class="img-error">⚠ Не удалось загрузить: ${safeSrc}</div>
+    `;
 }
 
 function collectQuestions(keys) {
@@ -364,7 +376,7 @@ function startSetup(mode) {
         briefingParts = [];
         if (desc.includes('<!--SPLIT-->')) {
             briefingParts = desc.split('<!--SPLIT-->').map(p => p.trim())
-                .map(p => p.replace('<!--TRANSITION-->', '').replace('<!--INTRO-->', '').replace('<!--SUMMARY-->', ''));
+                .map(p => p.replace('<!--TRANSITION-->', '').replace('<!--INTRO-->', '').replace('<!--SUMMARY-->', '').replace('<!--LEGENDS-->', ''));
             currentPartIndex = 0;
             showBriefingPart(0);
         } else {
@@ -572,15 +584,11 @@ function showQuestion() {
     if (qObj.img) {
         if (qObj.img2) {
             html += `<div class="img-grid">
-                <div><div class="img-label">Рисунок 1</div>
-                    <img src="${qObj.img}" alt="Рисунок 1" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #4b5563;"></div>
-                <div><div class="img-label">Рисунок 2</div>
-                    <img src="${qObj.img2}" alt="Рисунок 2" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #4b5563;"></div>
+                <div><div class="img-label">Рисунок 1</div>${renderImage(qObj.img, 'Рисунок 1')}</div>
+                <div><div class="img-label">Рисунок 2</div>${renderImage(qObj.img2, 'Рисунок 2')}</div>
             </div>`;
         } else {
-            html += `<div style="margin: 10px 0; text-align: center;">
-                <img src="${qObj.img}" alt="Иллюстрация к вопросу" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid #4b5563;">
-            </div>`;
+            html += `<div style="margin: 10px 0; text-align: center;">${renderImage(qObj.img, 'Иллюстрация к вопросу')}</div>`;
         }
     }
 
