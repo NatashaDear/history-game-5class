@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Машина времени 6.5</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { background-color: #0b0f19; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background: linear-gradient(145deg, #111827, #1f2937); border: 2px solid #3b82f6; border-radius: 15px; box-shadow: 0 0 25px rgba(59, 130, 246, 0.4); max-width: 750px; width: 100%; padding: 30px; text-align: center; }
+        h1 { color: #f59e0b; margin-top: 0; font-size: 26px; text-shadow: 0 0 10px rgba(245,158,11,0.3); }
+        h2 { color: #3b82f6; font-size: 20px; }
+        .info-box { background-color: #1e293b; border-left: 5px solid #a855f7; padding: 15px; text-align: left; border-radius: 4px; margin: 20px 0; line-height: 1.6; }
+        .btn { background: linear-gradient(to right, #2563eb, #1d4ed8); color: white; border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(37,99,235,0.3); margin-top: 15px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(37,99,235,0.5); }
+        .btn-secondary { background: linear-gradient(to right, #b45309, #7c2d12); }
+        .btn-secondary:hover { box-shadow: 0 6px 15px rgba(180,83,9,0.5); }
+        .btn-success { background: linear-gradient(to right, #059669, #047857); }
+        .btn-success:hover { box-shadow: 0 6px 15px rgba(5,150,105,0.5); }
+        .options { display: flex; flex-direction: column; gap: 12px; margin: 25px 0; }
+        .option-btn { background-color: #374151; color: white; border: 1px solid #4b5563; padding: 14px; text-align: left; font-size: 15px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        .option-btn:hover { background-color: #4b5563; border-color: #3b82f6; }
+        .option-btn:disabled { cursor: default; }
+        .feedback { font-size: 18px; font-weight: bold; margin-top: 15px; min-height: 27px; }
+        .progress-bar { background-color: #374151; height: 10px; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+        .progress { background-color: #10b981; height: 100%; width: 0%; transition: width 0.3s; }
+        .round-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+        .round1-tag { background-color: #065f46; color: #34d399; }
+        .round2-tag { background-color: #701a75; color: #f472b6; }
+        .round3-tag { background-color: #1e3a8a; color: #93c5fd; }
+        .result-item { text-align: left; margin: 10px 0; padding: 8px; background: #1f2937; border-radius: 6px; }
+        .footer-copyright { margin-top: 30px; padding-top: 15px; border-top: 1px solid #374151; font-size: 12px; color: #6b7280; line-height: 1.5; text-align: center; }
+        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 20px; }
+        .login-screen input { padding: 12px 20px; font-size: 18px; border-radius: 8px; border: 2px solid #4b5563; background: #1e293b; color: white; width: 80%; max-width: 300px; }
+        .login-screen input:focus { outline: none; border-color: #3b82f6; }
+        .login-error { color: #ef4444; font-size: 14px; min-height: 20px; }
+        .game-content { display: none; }
+        .menu-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .logout-btn { background: none; border: none; color: #9ca3af; font-size: 14px; cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: 0.2s; }
+        .logout-btn:hover { background: #374151; color: #ef4444; }
+        .nav-btn { background: none; border: 1px solid #4b5563; color: #9ca3af; padding: 5px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .nav-btn:hover { background: #374151; color: #e2e8f0; border-color: #ef4444; }
+        .p-tag { display: inline-block; background: #1e3a8a; color: #93c5fd; font-weight: bold; font-size: 14px; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; border: 1px solid #3b82f6; letter-spacing: 0.5px; }
+        .paragraphs-tag { display: inline-block; background: #374151; color: #9ca3af; font-size: 13px; padding: 2px 10px; border-radius: 12px; margin-top: 4px; }
+        .explanation-box { background: #1e293b; border-left: 4px solid #fcd34d; padding: 10px 15px; margin: 10px 0; border-radius: 6px; text-align: left; font-size: 15px; line-height: 1.5; }
+        .summary-block { background: #1e293b; padding: 15px; border-radius: 8px; border-left: 5px solid #3b82f6; text-align: left; margin-top: 15px; }
+        .part-menu { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; }
+        .part-btn { background-color: #1e293b; border: 2px solid #3b82f6; border-radius: 10px; padding: 15px 20px; color: #e2e8f0; cursor: pointer; transition: 0.2s; text-align: left; font-size: 15px; line-height: 1.5; }
+        .part-btn:hover { background-color: #2d3748; border-color: #60a5fa; }
+        .part-btn .part-label { color: #f59e0b; font-weight: bold; }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+        .img-grid { display: flex; gap: 15px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .img-grid > div { text-align: center; flex: 1; min-width: 200px; }
+        .img-grid .img-label { font-weight: bold; color: #93c5fd; margin-bottom: 5px; }
+        @media (max-width: 500px) { .container { padding: 15px; } h1 { font-size: 20px; } }
+    </style>
+</head>
+<body>
+<div class="container" id="game-box">
+    <div id="loginScreen" class="login-screen">
+        <h1>🔒 МАШИНА ВРЕМЕНИ 6.5</h1>
+        <p style="color: #9ca3af;">Введите пароль для доступа к игре</p>
+        <input type="password" id="passwordInput" placeholder="Введите пароль" autofocus>
+        <button class="btn" onclick="checkPassword()">ВОЙТИ</button>
+        <div id="loginError" class="login-error"></div>
+        <div style="font-size:12px; color:#4b5563; margin-top:20px;">* Пароль сообщает учитель или разработчик</div>
+    </div>
+    <div id="gameContent" class="game-content"></div>
+</div>
+
+<script>
+// Инициализация базы данных глав
+const historyDatabase = {};
+</script>
+
+<!-- Подключение глав -->
+<script src="chapters/chapter01.js"></script>
+<script src="chapters/chapter02.js"></script>
+<script src="chapters/chapter03.js"></script>
+<script src="chapters/chapter04.js"></script>
+<script src="chapters/chapter05.js"></script>
+<script src="chapters/chapter06.js"></script>
+<script src="chapters/chapter07.js"></script>
+
+<script>
+// ============================================
+// СКЛОНЕНИЕ СУЩЕСТВИТЕЛЬНЫХ
+// ============================================
+function pluralQuestions(n) {
+    const mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'вопрос';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'вопроса';
+    return 'вопросов';
+}
+
+const CORRECT_PASSWORD = "67";
+const SESSION_DAYS = 30;
+const STORAGE_KEY = "timeMachineLogin";
+
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function getChapterKeys() { return Object.keys(historyDatabase); }
+function getChapterTitle(key) { return historyDatabase[key]?.title || key; }
+function getChapterParagraphs(key) { return historyDatabase[key]?.paragraphs || ''; }
+function getChapterDesc(key) { return historyDatabase[key]?.desc || ''; }
+function getChapterFullDesc(key) { return historyDatabase[key]?.fullDescription || getChapterDesc(key); }
+
+function collectQuestions(keys) {
+    let direct = [], reverse = [], oge = [], vpr = [], olympiad = [], terminology = [];
+    keys.forEach(key => {
+        const ch = historyDatabase[key];
+        if (!ch) return;
+        if (ch.schoolDirect) direct.push(...ch.schoolDirect);
+        if (ch.schoolReverse) reverse.push(...ch.schoolReverse);
+        if (ch.schoolOge) oge.push(...ch.schoolOge);
+        if (ch.schoolVpr) vpr.push(...ch.schoolVpr);
+        if (ch.olympiad) olympiad.push(...ch.olympiad);
+        if (ch.terminology) terminology.push(...ch.terminology);
+        if (ch.parts) {
+            Object.values(ch.parts).forEach(part => {
+                const q = part.questions || {};
+                if (q.schoolDirect) direct.push(...q.schoolDirect);
+                if (q.schoolReverse) reverse.push(...q.schoolReverse);
+                if (q.schoolOge) oge.push(...q.schoolOge);
+                if (q.schoolVpr) vpr.push(...q.schoolVpr);
+                if (q.olympiad) olympiad.push(...q.olympiad);
+                if (q.terminology) terminology.push(...q.terminology);
+            });
+        }
+    });
+    return { direct, reverse, oge, vpr, olympiad, terminology };
+}
+
+// ============================================
+// ПАРОЛЬ И localStorage
+// ============================================
+function checkSavedLogin() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return false;
+    try {
+        const data = JSON.parse(stored);
+        const maxAge = SESSION_DAYS * 24 * 60 * 60 * 1000;
+        if (Date.now() - data.timestamp < maxAge) return true;
+        localStorage.removeItem(STORAGE_KEY);
+        return false;
+    } catch (e) { return false; }
+}
+
+function saveLogin() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ timestamp: Date.now() }));
+}
+
+function logout() {
+    localStorage.removeItem(STORAGE_KEY);
+    loginScreen.style.display = "flex";
+    gameContent.style.display = "none";
+    document.getElementById("passwordInput").value = "";
+    document.getElementById("loginError").textContent = "";
+}
+
+function checkPassword() {
+    const input = document.getElementById("passwordInput");
+    const error = document.getElementById("loginError");
+    if (input.value === CORRECT_PASSWORD) {
+        saveLogin();
+        loginScreen.style.display = "none";
+        gameContent.style.display = "block";
+        showMainMenu();
+    } else {
+        error.textContent = "❌ Неверный пароль! Попробуйте ещё раз.";
+        input.value = "";
+        input.focus();
+    }
+}
+
+document.getElementById("passwordInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") checkPassword();
+});
+
+// ============================================
+// ИГРОВАЯ ЛОГИКА
+// ============================================
+let activePool = [];
+let currentIdx = 0;
+let schoolScore = 0;
+let olyScore = 0;
+let playOlympiad = false;
+let currentMode = null;
+let baseLimit = 0;
+let globalSchoolLimit = 0;
+let olympiadQuestions = [];
+let roundLayout = [];
+
+let partsState = {};
+let currentPartsChapter = null;
+let currentPartKey = null;
+let scoreBeforePart = 0;
+
+const gameContent = document.getElementById("gameContent");
+const loginScreen = document.getElementById("loginScreen");
+
+let briefingParts = [];
+let currentPartIndex = 0;
+
+function renderCopyright() {
+    return `
+        <div class="footer-copyright">
+            © 2026, некоммерческий образовательный проект.<br>
+            <strong>Разработчик и методист: Пятина Наталья Владимировна</strong><br>
+            Коммерческое использование игры запрещено без письменного согласия правообладателя.
+        </div>
+    `;
+}
+
+function showMainMenu() {
+    const keys = getChapterKeys();
+    let optionsHtml = '';
+    keys.forEach(key => {
+        const title = getChapterTitle(key);
+        const paragraphs = getChapterParagraphs(key);
+        const desc = getChapterDesc(key);
+        const shortDesc = desc.length > 80 ? desc.substring(0, 80) + '...' : desc;
+        optionsHtml += `
+            <button class="option-btn" style="border-left: 5px solid #3b82f6;" onclick="startSetup('${key}')">
+                <b>📁 ${title}</b>
+                <div class="paragraphs-tag">${paragraphs}</div>
+                <br>
+                <span style="font-size:13px; color:#9ca3af;">${shortDesc}</span>
+            </button>
+        `;
+    });
+    optionsHtml += `
+        <button class="option-btn" style="border-left: 5px solid #f59e0b; background: linear-gradient(145deg, #1e293b, #2d3748);" onclick="startSetup('all')">
+            <b>👑 ГЛОБАЛЬНЫЙ МАРАФОН (ВСЕ ГЛАВЫ)</b><br>
+            <span style="font-size:13px; color:#fcd34d;">Все вопросы из всех глав, включая олимпиадные. Без пощады!</span>
+        </button>
+    `;
+
+    gameContent.innerHTML = `
+        <div class="menu-header">
+            <h1 style="margin:0;">⏱️ 🚀 МАШИНА ВРЕМЕНИ 6.5 🚀 ⏱️</h1>
+            <button class="logout-btn" onclick="logout()" title="Выйти и очистить сохранённый доступ">🚪 Выйти</button>
+        </div>
+        <h2>Гранд-Тренажёр по Истории Древнего Мира</h2>
+        <p>Выбери режим исторической экспедиции:</p>
+        <div class="options" style="margin: 30px 0;">
+            ${optionsHtml}
+        </div>
+        ${renderCopyright()}
+    `;
+}
+
+function startSetup(mode) {
+    currentMode = mode;
+    currentPartsChapter = null;
+    currentPartKey = null;
+
+    let keys = [];
+    let title, desc;
+    if (mode === 'all') {
+        keys = getChapterKeys();
+        title = "Глобальный марафон";
+        desc = "Этот режим объединяет материалы всех глав, включая олимпиадные вопросы.";
+    } else {
+        if (!historyDatabase[mode]) { showMainMenu(); return; }
+        keys = [mode];
+        title = historyDatabase[mode].title;
+        desc = getChapterFullDesc(mode);
+    }
+
+    const chData = mode === 'all' ? null : historyDatabase[mode];
+    if (chData && chData.parts) {
+        currentPartsChapter = mode;
+        const partKeys = Object.keys(chData.parts);
+        partsState[mode] = partKeys.map(() => false);
+        schoolScore = 0; olyScore = 0; playOlympiad = false;
+        globalSchoolLimit = 0; scoreBeforePart = 0;
+        briefingParts = [];
+        if (desc.includes('<!--SPLIT-->')) {
+            briefingParts = desc.split('<!--SPLIT-->').map(p => p.trim())
+                .map(p => p.replace('<!--TRANSITION-->', '').replace('<!--INTRO-->', '').replace('<!--SUMMARY-->', ''));
+            currentPartIndex = 0;
+            showBriefingPart(0);
+        } else {
+            showPartMenu(mode);
+        }
+        return;
+    }
+
+    const { direct, reverse, oge, vpr, olympiad, terminology } = collectQuestions(keys);
+    const shuffledDirect = shuffleArray(direct);
+    const shuffledReverse = shuffleArray(reverse);
+    const shuffledOge = shuffleArray(oge);
+    const shuffledVpr = shuffleArray(vpr);
+    const shuffledTerminology = shuffleArray(terminology);
+    olympiadQuestions = shuffleArray(olympiad);
+
+    // Для глобального марафона — все вопросы в одном пуле (включая олимпиадные)
+    if (mode === 'all') {
+        activePool = [...shuffledDirect, ...shuffledReverse, ...shuffledOge, ...shuffledVpr, ...shuffledTerminology, ...olympiadQuestions];
+    } else {
+        activePool = [...shuffledDirect, ...shuffledReverse, ...shuffledOge, ...shuffledVpr, ...shuffledTerminology];
+    }
+    baseLimit = activePool.length;
+    globalSchoolLimit = baseLimit;
+    currentIdx = 0; schoolScore = 0; olyScore = 0; playOlympiad = false; scoreBeforePart = 0;
+
+    roundLayout = [];
+    let acc = 0;
+    [
+        { name:'Прямой тест', icon:'🟢', cls:'round1-tag', count: shuffledDirect.length },
+        { name:'Логический реверс', icon:'🔴', cls:'round2-tag', count: shuffledReverse.length },
+        { name:'Формат ОГЭ', icon:'🔵', cls:'round3-tag', count: shuffledOge.length },
+        { name:'ВПР', icon:'🟡', cls:'round1-tag', count: shuffledVpr.length },
+        { name:'Терминологический диктант', icon:'📚', cls:'round2-tag', count: shuffledTerminology.length },
+        { name:'Олимпиадный уровень', icon:'🏆', cls:'round2-tag', count: (mode === 'all' ? olympiadQuestions.length : 0) }
+    ].forEach(r => {
+        if (r.count > 0) {
+            roundLayout.push({ name: r.name, icon: r.icon, cls: r.cls, count: r.count, start: acc });
+            acc += r.count;
+        }
+    });
+
+    showBriefing(title, desc, baseLimit);
+}
+
+function showBriefingPart(index) {
+    const title = getChapterTitle(currentPartsChapter);
+    const content = briefingParts[index];
+    const isLast = (index === briefingParts.length - 1);
+    const btnText = isLast ? 'ВЫБРАТЬ РАЗДЕЛ' : 'ДАЛЕЕ →';
+    const btnClass = isLast ? 'btn btn-success' : 'btn btn-secondary';
+    const onClick = isLast ? `showPartMenu('${currentPartsChapter}')` : 'nextBriefingPart()';
+
+    gameContent.innerHTML = `
+        <h1>🚀 ПОДГОТОВКА К ЗАПУСКУ 🚀</h1>
+        <h2>Модуль: ${title}</h2>
+        <div class="info-box"><strong>📖 Справка бортового компьютера:</strong><br>${content}</div>
+        <button class="${btnClass}" onclick="${onClick}">${btnText}</button>
+    `;
+}
+
+function nextBriefingPart() {
+    if (currentPartIndex < briefingParts.length - 1) {
+        currentPartIndex++;
+        showBriefingPart(currentPartIndex);
+    }
+}
+
+function showBriefing(title, desc, count) {
+    gameContent.innerHTML = `
+        <h1>🚀 ПОДГОТОВКА К ЗАПУСКУ 🚀</h1>
+        <h2>Модуль: ${title}</h2>
+        <div class="info-box"><strong>📖 Справка бортового компьютера:</strong><br>${desc}</div>
+        <p style="color: #60a5fa">Базовый экзаменационный блок содержит <b>${count} ${pluralQuestions(count)}</b>.</p>
+        <button class="btn" onclick="showQuestion()">АКТИВИРОВАТЬ ПРЫЖОК</button>
+        <div><button class="nav-btn" style="margin-top:15px;" onclick="showMainMenu()">← Вернуться в меню</button></div>
+    `;
+}
+
+function showPartMenu(chapterKey) {
+    const chData = historyDatabase[chapterKey];
+    if (!chData || !chData.parts) { showMainMenu(); return; }
+    const partKeys = Object.keys(chData.parts);
+    const state = partsState[chapterKey] || partKeys.map(() => false);
+    const doneCount = state.filter(Boolean).length;
+
+    let html = `
+        <h1>${chData.title}</h1>
+        <h2>Выбери раздел для изучения</h2>
+        <p style="color:#9ca3af; font-size:14px;">Пройдено: <b>${doneCount} из ${partKeys.length}</b></p>
+        <div class="part-menu">
+    `;
+    partKeys.forEach((pKey, idx) => {
+        const part = chData.parts[pKey];
+        const isDone = state[idx];
+        html += `
+            <button class="part-btn" onclick="startPart('${chapterKey}', '${pKey}')">
+                <div class="part-label">${isDone ? '✅' : '⬜'} ${part.title}</div>
+                <div style="font-size:13px; color:#9ca3af;">${part.desc || ''}</div>
+                <div style="font-size:12px; color:#6b7280; margin-top:4px;">${isDone ? 'Пройден' : 'Не пройден'}</div>
+            </button>
+        `;
+    });
+    html += `</div>
+        <button class="btn btn-secondary" onclick="showMainMenu()" style="margin-top:10px;">🏠 В главное меню</button>
+    `;
+    gameContent.innerHTML = html;
+}
+
+function startPart(chapterKey, partKey) {
+    currentPartsChapter = chapterKey;
+    currentPartKey = partKey;
+    const chData = historyDatabase[chapterKey];
+    const partData = chData.parts[partKey];
+    if (!partData) { alert('Ошибка: раздел не найден'); return; }
+
+    const partKeys = Object.keys(chData.parts);
+    const idx = partKeys.indexOf(partKey);
+    const state = partsState[chapterKey] || partKeys.map(() => false);
+    if (state[idx]) {
+        if (!confirm(`Раздел «${partData.title}» уже пройден. Пройти его заново?`)) return;
+        state[idx] = false;
+        partsState[chapterKey] = state;
+    }
+    scoreBeforePart = schoolScore;
+
+    const questions = partData.questions || {};
+    const direct = shuffleArray(questions.schoolDirect || []);
+    const reverse = shuffleArray(questions.schoolReverse || []);
+    const oge = shuffleArray(questions.schoolOge || []);
+    const vpr = shuffleArray(questions.schoolVpr || []);
+    const terminology = shuffleArray(questions.terminology || []);
+
+    activePool = [...direct, ...reverse, ...oge, ...vpr, ...terminology];
+    baseLimit = activePool.length;
+    currentIdx = 0; playOlympiad = false;
+    olympiadQuestions = shuffleArray(chData.olympiad || []);
+
+    roundLayout = [];
+    let acc = 0;
+    [
+        { name:'Прямой тест', icon:'🟢', cls:'round1-tag', count: direct.length },
+        { name:'Логический реверс', icon:'🔴', cls:'round2-tag', count: reverse.length },
+        { name:'Формат ОГЭ', icon:'🔵', cls:'round3-tag', count: oge.length },
+        { name:'ВПР', icon:'🟡', cls:'round1-tag', count: vpr.length },
+        { name:'Терминологический диктант', icon:'📚', cls:'round2-tag', count: terminology.length }
+    ].forEach(r => {
+        if (r.count > 0) {
+            roundLayout.push({ name: r.name, icon: r.icon, cls: r.cls, count: r.count, start: acc });
+            acc += r.count;
+        }
+    });
+
+    let totalAll = 0;
+    partKeys.forEach(pk => {
+        const q = chData.parts[pk].questions || {};
+        totalAll += (q.schoolDirect || []).length + (q.schoolReverse || []).length
+                  + (q.schoolOge || []).length + (q.schoolVpr || []).length + (q.terminology || []).length;
+    });
+    globalSchoolLimit = totalAll;
+
+    showBriefing(partData.title, `В этом разделе тебе предстоит ответить на ${baseLimit} ${pluralQuestions(baseLimit)}. Удачи!`, baseLimit);
+}
+
+let currentShuffledCorrectIndex = -1;
+
+function getCurrentRoundInfo() {
+    if (roundLayout.length === 0) return { num: 1, name: 'Вопросы', icon: '📝', cls: 'round1-tag' };
+    for (let i = 0; i < roundLayout.length; i++) {
+        const r = roundLayout[i];
+        if (currentIdx >= r.start && currentIdx < r.start + r.count) {
+            return { num: i + 1, name: r.name, icon: r.icon, cls: r.cls };
+        }
+    }
+    const last = roundLayout[roundLayout.length - 1];
+    return { num: roundLayout.length, name: last.name, icon: last.icon, cls: last.cls };
+}
+
+function showQuestion() {
+    const qObj = activePool[currentIdx];
+    const progressPct = ((currentIdx) / activePool.length) * 100;
+
+    let pTag = '';
+    if (qObj.p) pTag = `<div class="p-tag">📖 §${qObj.p}</div>`;
+
+    let tagHtml = '';
+    if (!playOlympiad) {
+        const info = getCurrentRoundInfo();
+        tagHtml = `<span class="round-tag ${info.cls}">${info.icon} Раунд ${info.num}: ${info.name} (${currentIdx + 1}/${baseLimit})</span>`;
+    } else {
+        const olyCur = currentIdx - baseLimit + 1;
+        tagHtml = `<span class="round-tag" style="background-color:#7c2d12; color:#fed7aa;">🏆 Раунд олимпиады (${olyCur}/${olympiadQuestions.length})</span>`;
+    }
+
+    const originalAnswers = qObj.a;
+    const shuffled = shuffleArray(originalAnswers);
+    const correctAnswerText = originalAnswers[qObj.c];
+    currentShuffledCorrectIndex = shuffled.indexOf(correctAnswerText);
+
+    let html = `<div class="progress-bar"><div class="progress" style="width: ${progressPct}%"></div></div>`;
+    html += `<div class="question-header"><div>${tagHtml}</div>
+        <button class="nav-btn" onclick="exitCurrentLevel()" title="Прервать и вернуться">🚪 Прервать</button>
+    </div>`;
+    html += pTag;
+
+    if (qObj.img) {
+        if (qObj.img2) {
+            html += `<div class="img-grid">
+                <div><div class="img-label">Рисунок 1</div>
+                    <img src="${qObj.img}" alt="Рисунок 1" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #4b5563;"></div>
+                <div><div class="img-label">Рисунок 2</div>
+                    <img src="${qObj.img2}" alt="Рисунок 2" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #4b5563;"></div>
+            </div>`;
+        } else {
+            html += `<div style="margin: 10px 0; text-align: center;">
+                <img src="${qObj.img}" alt="Иллюстрация к вопросу" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid #4b5563;">
+            </div>`;
+        }
+    }
+
+    html += `<h3 style="margin-top:10px; line-height:1.4;">${qObj.q}</h3>`;
+    html += `<div class="options">`;
+    shuffled.forEach((opt, idx) => {
+        html += `<button class="option-btn" onclick="checkAnswer(${idx})">${idx + 1}) ${opt}</button>`;
+    });
+    html += `</div><div class="feedback" id="feedback"></div>`;
+    gameContent.innerHTML = html;
+}
+
+function checkAnswer(chosenIdx) {
+    const qObj = activePool[currentIdx];
+    const fDiv = document.getElementById("feedback");
+    const btns = document.querySelectorAll(".option-btn");
+    btns.forEach(b => b.disabled = true);
+
+    if (chosenIdx === currentShuffledCorrectIndex) {
+        if (currentIdx < baseLimit) schoolScore++;
+        else olyScore++;
+        fDiv.innerHTML = `<span style="color:#10b981">✅ ${qObj.f}</span>`;
+        btns[chosenIdx].style.background = "#065f46";
+        btns[chosenIdx].style.borderColor = "#10b981";
+    } else {
+        const correctAnswerText = qObj.a[qObj.c];
+        fDiv.innerHTML = `
+            <div style="color:#ef4444;">❌ Неверно! Правильный ответ: <b>${correctAnswerText}</b></div>
+            <div class="explanation-box">📖 <b>Объяснение:</b> ${qObj.f}</div>
+        `;
+        btns[chosenIdx].style.background = "#991b1b";
+        btns[chosenIdx].style.borderColor = "#ef4444";
+        btns[currentShuffledCorrectIndex].style.background = "#065f46";
+    }
+
+    currentIdx++;
+
+    let nextBtnText = "ДАЛЕЕ";
+    let nextAction = showQuestion;
+
+    if (!playOlympiad && currentIdx >= baseLimit) {
+        if (currentPartsChapter) {
+            nextBtnText = "ЗАВЕРШИТЬ РАЗДЕЛ";
+            nextAction = finishPart;
+        } else {
+            nextBtnText = "ЗАВЕРШИТЬ БАЗОВЫЙ БЛОК";
+            nextAction = showOlyChoice;
+        }
+    } else if (playOlympiad && currentIdx >= activePool.length) {
+        nextBtnText = "ЗАВЕРШИТЬ ИГРУ";
+        nextAction = showFinal;
+    } else if (playOlympiad) {
+        nextBtnText = "ДАЛЕЕ (Олимпиада)";
+    } else {
+        const info = getCurrentRoundInfo();
+        nextBtnText = `ДАЛЕЕ (Раунд ${info.num})`;
+    }
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn";
+    nextBtn.innerText = nextBtnText;
+    nextBtn.onclick = function() { nextAction(); };
+    gameContent.appendChild(nextBtn);
+
+    const exitBtn = document.createElement("button");
+    exitBtn.className = "nav-btn";
+    exitBtn.style.marginTop = "10px";
+    exitBtn.innerText = "🚪 Прервать и выйти";
+    exitBtn.onclick = exitCurrentLevel;
+    gameContent.appendChild(document.createElement("div")).appendChild(exitBtn);
+}
+
+function exitCurrentLevel() {
+    if (currentPartsChapter && currentPartKey) {
+        if (confirm('Прервать раздел? Прогресс этого раздела не сохранится.')) {
+            currentPartKey = null;
+            showPartMenu(currentPartsChapter);
+        }
+    } else {
+        if (confirm('Прервать и вернуться в главное меню?')) showMainMenu();
+    }
+}
+
+function finishPart() {
+    const chData = historyDatabase[currentPartsChapter];
+    const partKeys = Object.keys(chData.parts);
+    const idx = partKeys.indexOf(currentPartKey);
+    const state = partsState[currentPartsChapter] || partKeys.map(() => false);
+    state[idx] = true;
+    partsState[currentPartsChapter] = state;
+
+    const allDone = state.every(v => v === true);
+    const totalQuestionsAll = globalSchoolLimit || baseLimit;
+    const partScore = schoolScore - scoreBeforePart;
+
+    let html = `
+        <h1>🏁 Раздел пройден!</h1>
+        <h2>${chData.parts[currentPartKey].title}</h2>
+        <div class="info-box" style="border-color:#10b981; text-align:center;">
+            <span style="font-size:18px;">Общий результат: <b>${schoolScore}</b> баллов<br>
+            (из ${totalQuestionsAll} вопросов во всех разделах)</span>
+            <div style="font-size:14px; color:#9ca3af; margin-top:5px;">
+                За этот раздел: <b>${partScore}</b> из <b>${baseLimit}</b> баллов
+            </div>
+        </div>
+        <p style="color:#9ca3af;">Прогресс: <b>${state.filter(Boolean).length} из ${state.length}</b> разделов пройдено.</p>
+    `;
+
+    if (!allDone) {
+        html += `<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:15px;">
+            <button class="btn btn-success" onclick="showPartMenu('${currentPartsChapter}')">📋 ВЫБРАТЬ ДРУГОЙ РАЗДЕЛ</button>
+            <button class="btn btn-secondary" onclick="showMainMenu()">🏠 В ГЛАВНОЕ МЕНЮ</button>
+        </div>`;
+    } else {
+        html += `<p style="color:#fcd34d; margin-top:15px;">🎉 Ты прошёл все разделы! Готов проверить свои знания на олимпиадном уровне?</p>
+            <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px;">
+                <button class="btn" style="background:linear-gradient(to right, #b45309, #7c2d12);" onclick="startOlympiad()">🏆 ОЛИМПИАДА</button>
+                <button class="btn btn-secondary" onclick="showMainMenu()">🏠 В ГЛАВНОЕ МЕНЮ</button>
+            </div>`;
+    }
+    gameContent.innerHTML = html;
+}
+
+function showOlyChoice() {
+    const limit = baseLimit;
+    gameContent.innerHTML = `
+        <h2>🏁 Базовый блок завершён!</h2>
+        <div class="info-box" style="border-color:#10b981; text-align:center;">
+            <span style="font-size:18px;">Твой результат: <b>${schoolScore} из ${limit} баллов</b>!</span>
+        </div>
+        ${olympiadQuestions.length > 0 ? `
+            <button class="btn" style="background:linear-gradient(to right, #b45309, #7c2d12); margin-right:10px;" onclick="startOlympiad()">🎯 ИДТИ НА ОЛИМПИАДУ</button>
+        ` : `<p style="color:#9ca3af;">Олимпиадных заданий для этого режима нет.</p>`}
+        <button class="btn" style="background:linear-gradient(to right, #4b5563, #374151);" onclick="showFinal()">🛑 ЗАВЕРШИТЬ ИГРУ</button>
+    `;
+}
+
+function startOlympiad() {
+    if (olympiadQuestions.length === 0 && currentPartsChapter) {
+        const chData = historyDatabase[currentPartsChapter];
+        olympiadQuestions = shuffleArray(chData.olympiad || []);
+    }
+    if (olympiadQuestions.length === 0) { showFinal(); return; }
+    if (playOlympiad) { alert('Олимпиада уже запущена.'); return; }
+    playOlympiad = true;
+    activePool = activePool.concat(olympiadQuestions);
+    showQuestion();
+}
+
+function showFinal() {
+    const olyLimit = olympiadQuestions.length;
+    const limit = globalSchoolLimit || baseLimit;
+    const schoolMark = getSchoolMark(schoolScore, limit);
+    let html = `<h1>🏁 СУПЕР-МАРАФОН ЗАВЕРШЕН! 🏁</h1><h2>Экзаменационная ведомость:</h2><div class="info-box" style="border-color: #3b82f6;">`;
+    html += `<div class="result-item">🏫 <b>Школьная программа:</b> <span>${schoolScore} из ${limit} баллов</span> — <b style="color:#10b981">${schoolMark}</b></div>`;
+    if (playOlympiad && olyLimit > 0) {
+        const olyMark = olyScore === olyLimit ? "Победитель олимпиады" : (olyScore >= (olyLimit * 0.6) ? "Призёр олимпиады" : "Участник");
+        html += `<div class="result-item" style="border-left:4px solid #f59e0b;">🏆 <b>Олимпиадный уровень:</b> <span>${olyScore} из ${olyLimit} баллов</span> — <b style="color:#f59e0b">${olyMark}</b></div>`;
+        html += `<div class="result-item" style="background:#111827; text-align:center; margin-top:15px;">👑 <b>ОБЩИЙ ИТОГ:</b> <span style="color:#f59e0b; font-weight:bold;">${schoolScore + olyScore} из ${limit + olyLimit} баллов</span></div>`;
+    } else {
+        html += `<div class="result-item" style="color:#9ca3af; text-align:center;">🎯 <i>Олимпиадный раунд не был выбран.</i></div>`;
+    }
+    html += `</div>`;
+    html += renderCopyright();
+    html += `<button class="btn" onclick="showMainMenu()">В ГЛАВНОЕ МЕНЮ</button>`;
+    gameContent.innerHTML = html;
+}
+
+function getSchoolMark(s, limit) {
+    if (limit === 0) return "Оценка недоступна";
+    const pct = (s / limit) * 100;
+    if (pct === 100) return "5+++ (Магистр)";
+    if (pct >= 80) return "5 (Отлично)";
+    if (pct >= 50) return "4 (Хорошо)";
+    return "3 (Нужно повторить)";
+}
+
+// ============================================
+// СТАРТ
+// ============================================
+if (checkSavedLogin()) {
+    loginScreen.style.display = "none";
+    gameContent.style.display = "block";
+    showMainMenu();
+} else {
+    loginScreen.style.display = "flex";
+    gameContent.style.display = "none";
+}
+</script>
+</body>
+</html>
